@@ -1,11 +1,10 @@
 import express from "express";
+import { successResponse } from "../shared/utils/apiResponse.js";
 
 const router = express.Router();
 
 router.get("/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "GatePulse backend is running",
+  return successResponse(res, "GatePulse backend is running", {
     timestamp: new Date().toISOString(),
   });
 });
