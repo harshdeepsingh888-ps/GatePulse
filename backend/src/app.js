@@ -5,6 +5,10 @@ import pinoHttp from "pino-http";
 
 import healthRoutes from "./routes/health.routes.js";
 import { logger } from "./shared/logger/logger.js";
+import {
+  globalErrorHandler,
+  notFoundHandler,
+} from "./shared/middleware/error.middleware.js";
 
 const app = express();
 
@@ -19,5 +23,8 @@ app.use(
 );
 
 app.use("/api", healthRoutes);
+
+app.use(notFoundHandler);
+app.use(globalErrorHandler);
 
 export default app;
