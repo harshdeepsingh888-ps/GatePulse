@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AdminRole {
+  ADMIN
+  VIEWER
+}
+
+enum ApiKeyTier {
+  FREE
+  PRO
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         AdminRole @default(ADMIN)
+
+  apiKeys      ApiKey[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ApiKey {
+  id                String      @id @default(uuid())
+  name              String
+  keyHash           String      @unique
+  keyPrefix         String
+  tier              ApiKeyTier  @default(FREE)
+  requestsPerMinute Int
+  isActive          Boolean     @default(true)
+  expiresAt         DateTime?
+  lastUsedAt        DateTime?
+
+  adminId           String
+  admin             Admin       @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  requestLogs       RequestLog[]
+
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([adminId])
+  @@index([tier])
+  @@index([isActive])
+}
+
+model RequestLog {
+  id             String   @id @default(uuid())
+  method         String
+  endpoint       String
+  statusCode     Int
+  responseTimeMs Int
+  ipAddress      String?
+  userAgent      String?
+  wasBlocked     Boolean  @default(false)
+  blockReason    String?
+
+  apiKeyId       String?
+  apiKey         ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+
+  createdAt      DateTime @default(now())
+
+  @@index([apiKeyId])
+  @@index([createdAt])
+  @@index([statusCode])
+  @@index([wasBlocked])
+}
