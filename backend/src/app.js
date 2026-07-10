@@ -5,37 +5,38 @@ import pinoHttp from "pino-http";
 
 import healthRoutes from "./routes/health.routes.js";
 import testRoutes from "./routes/test.routes.js";
+import authRoutes from "./routes/auth.routes.js";
 
 import { logger } from "./shared/logger/logger.js";
-
 import {
-  notFoundHandler,
   globalErrorHandler,
+  notFoundHandler,
 } from "./shared/middleware/error.middleware.js";
 
 const app = express();
 
-// Security Middleware
 app.use(helmet());
-
-// CORS Middleware
 app.use(cors());
-
-// Parse JSON Request Body
 app.use(express.json());
 
-// HTTP Request Logger
 app.use(
   pinoHttp({
     logger,
+    redact: {
+      paths: [
+        "req.headers.authorization",
+        "req.headers.cookie",
+        "res.headers['set-cookie']",
+      ],
+      censor: "[REDACTED]",
+    },
   })
 );
 
-// Routes
 app.use("/api", healthRoutes);
 app.use("/api", testRoutes);
+app.use("/api/auth", authRoutes);
 
-// Error Handling Middleware
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
 
