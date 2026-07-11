@@ -7,6 +7,7 @@ import healthRoutes from "./routes/health.routes.js";
 import testRoutes from "./routes/test.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import apiKeyRoutes from "./routes/apiKey.routes.js";
+import gatewayRoutes from "./routes/gateway.routes.js";
 
 import { logger } from "./shared/logger/logger.js";
 
@@ -27,8 +28,8 @@ app.use(
     redact: {
       paths: [
         "req.headers.authorization",
-        "req.headers.cookie",
         "res.headers['set-cookie']",
+        "req.headers.cookie",
       ],
       censor: "[REDACTED]",
     },
@@ -39,6 +40,7 @@ app.use("/api", healthRoutes);
 app.use("/api", testRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/api-keys", apiKeyRoutes);
+app.use("/gateway", gatewayRoutes);
 
 app.use(notFoundHandler);
 app.use(globalErrorHandler);
