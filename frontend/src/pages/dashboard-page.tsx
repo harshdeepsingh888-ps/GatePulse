@@ -6,11 +6,13 @@ import {
 } from "lucide-react";
 
 import { ChartCard } from "@/components/dashboard/chart-card";
+import { ErrorDistribution } from "@/components/dashboard/error-distribution";
+import { GatewayHealth } from "@/components/dashboard/gateway-health";
 import { MetricCard } from "@/components/dashboard/metric-card";
+import { RecentRequestsTable } from "@/components/dashboard/recent-requests-table";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { TrafficChart } from "@/components/dashboard/traffic-chart";
 import { useDashboardAnalytics } from "@/features/analytics/hooks/use-dashboard-analytics";
-import { RecentRequestsTable } from "@/components/dashboard/recent-requests-table";
 
 export function DashboardPage() {
   const analytics = useDashboardAnalytics();
@@ -81,8 +83,10 @@ export function DashboardPage() {
 
           <p className="mt-2 text-sm text-muted-foreground">
             Your API Gateway is{" "}
-            <span className="font-medium text-emerald-500">healthy</span> and
-            running smoothly.
+            <span className="font-medium text-emerald-500">
+              healthy
+            </span>{" "}
+            and running smoothly.
           </p>
         </div>
 
@@ -122,105 +126,125 @@ export function DashboardPage() {
           description="API requests over the last 24 hours"
         >
           <TrafficChart
-  data={analytics.usageTrendQuery.data ?? []}
-/>
+            data={analytics.usageTrendQuery.data ?? []}
+          />
         </ChartCard>
 
         <SectionCard
-  title="Top API Keys"
-  description="Highest traffic consumers during the selected period"
-  className="min-h-96"
->
-  {analytics.topApiKeysQuery.isPending && (
-    <div className="flex min-h-72 items-center justify-center text-sm text-muted-foreground">
-      Loading API key rankings...
-    </div>
-  )}
-
-  {analytics.topApiKeysQuery.isError && (
-    <div className="flex min-h-72 items-center justify-center text-sm text-destructive">
-      Unable to load API key rankings.
-    </div>
-  )}
-
-  {analytics.topApiKeysQuery.isSuccess &&
-    analytics.topApiKeysQuery.data.length === 0 && (
-      <div className="flex min-h-72 items-center justify-center text-sm text-muted-foreground">
-        No API key usage recorded yet.
-      </div>
-    )}
-
-  {analytics.topApiKeysQuery.isSuccess &&
-    analytics.topApiKeysQuery.data.length > 0 && (
-      <div className="space-y-3">
-        {analytics.topApiKeysQuery.data.slice(0, 5).map((apiKey, index) => (
-          <div
-            key={apiKey.id}
-            className="flex items-center gap-3 rounded-xl border border-border/70 p-3"
-          >
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-semibold">
-              {index + 1}
+          title="Top API Keys"
+          description="Highest traffic consumers during the selected period"
+          className="min-h-96"
+        >
+          {analytics.topApiKeysQuery.isPending && (
+            <div className="flex min-h-72 items-center justify-center text-sm text-muted-foreground">
+              Loading API key rankings...
             </div>
+          )}
 
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-3">
-                <p className="truncate text-sm font-medium">
-                  {apiKey.name}
-                </p>
-
-                <p className="shrink-0 text-sm font-semibold">
-                  {apiKey.totalRequests.toLocaleString()}
-                </p>
-              </div>
-
-              <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                <span>{apiKey.tier}</span>
-                <span>•</span>
-                <span>
-                  {apiKey.isActive ? "Active" : "Revoked"}
-                </span>
-              </div>
+          {analytics.topApiKeysQuery.isError && (
+            <div className="flex min-h-72 items-center justify-center text-sm text-destructive">
+              Unable to load API key rankings.
             </div>
-          </div>
-        ))}
-      </div>
-    )}
-</SectionCard>
+          )}
+
+          {analytics.topApiKeysQuery.isSuccess &&
+            analytics.topApiKeysQuery.data.length === 0 && (
+              <div className="flex min-h-72 items-center justify-center text-sm text-muted-foreground">
+                No API key usage recorded yet.
+              </div>
+            )}
+
+          {analytics.topApiKeysQuery.isSuccess &&
+            analytics.topApiKeysQuery.data.length > 0 && (
+              <div className="space-y-3">
+                {analytics.topApiKeysQuery.data
+                  .slice(0, 5)
+                  .map((apiKey, index) => (
+                    <div
+                      key={apiKey.id}
+                      className="flex items-center gap-3 rounded-xl border border-border/70 p-3"
+                    >
+                      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-semibold">
+                        {index + 1}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="truncate text-sm font-medium">
+                            {apiKey.name}
+                          </p>
+
+                          <p className="shrink-0 text-sm font-semibold">
+                            {apiKey.totalRequests.toLocaleString()}
+                          </p>
+                        </div>
+
+                        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{apiKey.tier}</span>
+                          <span>•</span>
+                          <span>
+                            {apiKey.isActive
+                              ? "Active"
+                              : "Revoked"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+        </SectionCard>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
         <SectionCard
-  title="Recent Requests"
-  description="Latest requests processed by the gateway"
-  className="min-h-72 xl:col-span-2"
->
-  {analytics.recentRequestsQuery.isPending && (
-    <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
-      Loading recent requests...
-    </div>
-  )}
+          title="Recent Requests"
+          description="Latest requests processed by the gateway"
+          className="min-h-72 xl:col-span-2"
+        >
+          {analytics.recentRequestsQuery.isPending && (
+            <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
+              Loading recent requests...
+            </div>
+          )}
 
-  {analytics.recentRequestsQuery.isError && (
-    <div className="flex min-h-48 items-center justify-center text-sm text-destructive">
-      Unable to load recent requests.
-    </div>
-  )}
+          {analytics.recentRequestsQuery.isError && (
+            <div className="flex min-h-48 items-center justify-center text-sm text-destructive">
+              Unable to load recent requests.
+            </div>
+          )}
 
-  {analytics.recentRequestsQuery.isSuccess && (
-    <RecentRequestsTable
-      requests={analytics.recentRequestsQuery.data.slice(0, 8)}
-    />
-  )}
-</SectionCard>
+          {analytics.recentRequestsQuery.isSuccess && (
+            <RecentRequestsTable
+              requests={analytics.recentRequestsQuery.data.slice(
+                0,
+                8,
+              )}
+            />
+          )}
+        </SectionCard>
 
         <SectionCard
           title="Gateway Health"
           description="Current operational status of gateway services"
           className="min-h-72"
         >
-          <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
-            Gateway health summary will be implemented next
-          </div>
+          {analytics.overviewQuery.isPending ||
+          analytics.latencyQuery.isPending ? (
+            <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
+              Loading gateway health...
+            </div>
+          ) : analytics.overviewQuery.isError ||
+            analytics.latencyQuery.isError ? (
+            <div className="flex min-h-48 items-center justify-center text-sm text-destructive">
+              Unable to load gateway health.
+            </div>
+          ) : (
+            <GatewayHealth
+              overview={analytics.overviewQuery.data}
+              latency={analytics.latencyQuery.data}
+            />
+          )}
         </SectionCard>
 
         <SectionCard
@@ -228,9 +252,19 @@ export function DashboardPage() {
           description="Breakdown of gateway errors by category"
           className="min-h-72"
         >
-          <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
-            Error distribution chart will be implemented next
-          </div>
+          {analytics.errorsQuery.isPending ? (
+            <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
+              Loading error distribution...
+            </div>
+          ) : analytics.errorsQuery.isError ? (
+            <div className="flex min-h-48 items-center justify-center text-sm text-destructive">
+              Unable to load error distribution.
+            </div>
+          ) : (
+            <ErrorDistribution
+              errors={analytics.errorsQuery.data}
+            />
+          )}
         </SectionCard>
       </section>
     </div>
