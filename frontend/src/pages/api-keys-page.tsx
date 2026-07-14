@@ -1,5 +1,6 @@
 import { KeyRound, Loader2 } from "lucide-react";
 
+import { CreateApiKeyDialog } from "@/components/api-keys/create-api-key-dialog";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { useApiKeys } from "@/features/api-keys/hooks/use-api-keys";
 
@@ -21,30 +22,23 @@ export function ApiKeysPage() {
   return (
     <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">
       <section className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl border border-border bg-muted">
-              <KeyRound className="size-5" />
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-xl border border-border bg-muted">
+            <KeyRound className="size-5" />
+          </div>
 
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                API Keys
-              </h1>
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              API Keys
+            </h1>
 
-              <p className="mt-1 text-sm text-muted-foreground">
-                Manage credentials that access your GatePulse gateway.
-              </p>
-            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Manage credentials that access your GatePulse gateway.
+            </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          className="rounded-lg bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90"
-        >
-          Create API Key
-        </button>
+        <CreateApiKeyDialog />
       </section>
 
       <SectionCard
