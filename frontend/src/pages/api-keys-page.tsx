@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { KeyRound, Loader2 } from "lucide-react";
 
+import { ApiKeyActions } from "@/components/api-keys/api-key-actions";
 import { CreateApiKeyDialog } from "@/components/api-keys/create-api-key-dialog";
+import { RegenerateApiKeyDialog } from "@/components/api-keys/regenerate-api-key-dialog";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { useApiKeys } from "@/features/api-keys/hooks/use-api-keys";
+import { useRevokeApiKey } from "@/features/api-keys/hooks/use-revoke-api-key";
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -18,6 +22,24 @@ function formatDate(value: string | null) {
 
 export function ApiKeysPage() {
   const apiKeysQuery = useApiKeys();
+  const revokeApiKeyMutation = useRevokeApiKey();
+
+  const [regenerateTarget, setRegenerateTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  async function handleRevoke(id: string, name: string) {
+    const confirmed = window.confirm(
+      `Revoke "${name}"? This API key will stop working immediately.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    await revokeApiKeyMutation.mutateAsync(id);
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">
@@ -79,9 +101,7 @@ export function ApiKeysPage() {
               <KeyRound className="size-5 text-muted-foreground" />
             </div>
 
-            <p className="mt-4 text-sm font-medium">
-              No API keys found
-            </p>
+            <p className="mt-4 text-sm font-medium">No API keys found</p>
 
             <p className="mt-1 text-sm text-muted-foreground">
               Create your first key to start routing requests.
@@ -91,7 +111,7 @@ export function ApiKeysPage() {
 
         {apiKeysQuery.isSuccess && apiKeysQuery.data.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left">
+            <table className="w-full min-w-[1000px] text-left">
               <thead>
                 <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
                   <th className="pb-3 font-medium">Name</th>
@@ -101,59 +121,97 @@ export function ApiKeysPage() {
                   <th className="pb-3 font-medium">Status</th>
                   <th className="pb-3 font-medium">Last Used</th>
                   <th className="pb-3 font-medium">Created</th>
+                  <th className="pb-3 text-right font-medium">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                {apiKeysQuery.data.map((apiKey) => (
-                  <tr
-                    key={apiKey.id}
-                    className="border-b border-border/60 text-sm last:border-0"
-                  >
-                    <td className="py-4 font-medium">
-                      {apiKey.name}
-                    </td>
+                {apiKeysQuery.data.map((apiKey) => {
+                  const isRevoking =
+                    revokeApiKeyMutation.isPending &&
+                    revokeApiKeyMutation.variables === apiKey.id;
 
-                    <td className="py-4 font-mono text-xs text-muted-foreground">
-                      {apiKey.keyPrefix}...
-                    </td>
+                  return (
+                    <tr
+                      key={apiKey.id}
+                      className="border-b border-border/60 text-sm last:border-0"
+                    >
+                      <td className="py-4 font-medium">{apiKey.name}</td>
 
-                    <td className="py-4">
-                      <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium">
-                        {apiKey.tier}
-                      </span>
-                    </td>
+                      <td className="py-4 font-mono text-xs text-muted-foreground">
+                        {apiKey.keyPrefix}...
+                      </td>
 
-                    <td className="py-4 text-muted-foreground">
-                      {apiKey.requestsPerMinute} RPM
-                    </td>
+                      <td className="py-4">
+                        <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium">
+                          {apiKey.tier}
+                        </span>
+                      </td>
 
-                    <td className="py-4">
-                      <span
-                        className={
-                          apiKey.isActive
-                            ? "rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600"
-                            : "rounded-full bg-rose-500/10 px-2.5 py-1 text-xs font-medium text-rose-600"
-                        }
-                      >
-                        {apiKey.isActive ? "Active" : "Revoked"}
-                      </span>
-                    </td>
+                      <td className="py-4 text-muted-foreground">
+                        {apiKey.requestsPerMinute} RPM
+                      </td>
 
-                    <td className="py-4 text-muted-foreground">
-                      {formatDate(apiKey.lastUsedAt)}
-                    </td>
+                      <td className="py-4">
+                        <span
+                          className={
+                            apiKey.isActive
+                              ? "rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600"
+                              : "rounded-full bg-rose-500/10 px-2.5 py-1 text-xs font-medium text-rose-600"
+                          }
+                        >
+                          {apiKey.isActive ? "Active" : "Revoked"}
+                        </span>
+                      </td>
 
-                    <td className="py-4 text-muted-foreground">
-                      {formatDate(apiKey.createdAt)}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="py-4 text-muted-foreground">
+                        {formatDate(apiKey.lastUsedAt)}
+                      </td>
+
+                      <td className="py-4 text-muted-foreground">
+                        {formatDate(apiKey.createdAt)}
+                      </td>
+
+                      <td className="py-4 text-right">
+                        <ApiKeyActions
+                          isActive={apiKey.isActive}
+                          isLoading={isRevoking}
+                          onRevoke={() =>
+                            handleRevoke(apiKey.id, apiKey.name)
+                          }
+                          onRegenerate={() =>
+                            setRegenerateTarget({
+                              id: apiKey.id,
+                              name: apiKey.name,
+                            })
+                          }
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+
+            {revokeApiKeyMutation.isError && (
+              <p className="mt-4 text-sm text-destructive">
+                Unable to revoke the API key. Your session may have expired.
+              </p>
+            )}
           </div>
         )}
       </SectionCard>
+
+      <RegenerateApiKeyDialog
+        apiKeyId={regenerateTarget?.id ?? null}
+        apiKeyName={regenerateTarget?.name ?? null}
+        open={regenerateTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRegenerateTarget(null);
+          }
+        }}
+      />
     </div>
   );
 }
