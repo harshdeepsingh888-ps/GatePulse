@@ -26,14 +26,17 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("gatepulse_access_token");
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("gatepulse_access_token");
 
-  console.log("JWT:", token);
+      if (window.location.pathname !== "/login") {
+        window.location.replace("/login");
+      }
+    }
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+    return Promise.reject(error);
+  },
+);

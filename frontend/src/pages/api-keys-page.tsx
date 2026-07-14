@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { KeyRound, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { KeyRound, Loader2, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 import { ApiKeyActions } from "@/components/api-keys/api-key-actions";
 import { CreateApiKeyDialog } from "@/components/api-keys/create-api-key-dialog";
@@ -23,11 +24,28 @@ function formatDate(value: string | null) {
 export function ApiKeysPage() {
   const apiKeysQuery = useApiKeys();
   const revokeApiKeyMutation = useRevokeApiKey();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [regenerateTarget, setRegenerateTarget] = useState<{
     id: string;
     name: string;
   } | null>(null);
+  const filteredApiKeys = useMemo(() => {
+  const query = searchQuery.trim().toLowerCase();
+
+  if (!apiKeysQuery.data || !query) {
+    return apiKeysQuery.data ?? [];
+  }
+
+  return apiKeysQuery.data.filter((apiKey) =>
+    [
+      apiKey.name,
+      apiKey.keyPrefix,
+      apiKey.tier,
+      apiKey.isActive ? "active" : "revoked",
+    ].some((value) => value.toLowerCase().includes(query)),
+  );
+}, [apiKeysQuery.data, searchQuery]);
 
   async function handleRevoke(id: string, name: string) {
     const confirmed = window.confirm(
@@ -73,6 +91,24 @@ export function ApiKeysPage() {
             Loading API keys...
           </div>
         )}
+        <div className="mb-5 flex items-center justify-between gap-4">
+  <div className="relative w-full max-w-sm">
+    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+    <Input
+      value={searchQuery}
+      onChange={(event) => setSearchQuery(event.target.value)}
+      placeholder="Search by name, prefix, tier, or status"
+      className="pl-9"
+    />
+  </div>
+
+  {apiKeysQuery.isSuccess && (
+    <p className="shrink-0 text-sm text-muted-foreground">
+      {filteredApiKeys.length} of {apiKeysQuery.data.length} keys
+    </p>
+  )}
+</div>
 
         {apiKeysQuery.isError && (
           <div className="flex min-h-64 flex-col items-center justify-center gap-3 text-center">
@@ -108,8 +144,23 @@ export function ApiKeysPage() {
             </p>
           </div>
         )}
+        {apiKeysQuery.isSuccess &&
+  apiKeysQuery.data.length > 0 &&
+  filteredApiKeys.length === 0 && (
+    <div className="flex min-h-56 flex-col items-center justify-center text-center">
+      <Search className="size-6 text-muted-foreground" />
 
-        {apiKeysQuery.isSuccess && apiKeysQuery.data.length > 0 && (
+      <p className="mt-3 text-sm font-medium">
+        No matching API keys
+      </p>
+
+      <p className="mt-1 text-sm text-muted-foreground">
+        Try a different search term.
+      </p>
+    </div>
+  )}
+
+        {apiKeysQuery.isSuccess && filteredApiKeys.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[1000px] text-left">
               <thead>
@@ -126,7 +177,7 @@ export function ApiKeysPage() {
               </thead>
 
               <tbody>
-                {apiKeysQuery.data.map((apiKey) => {
+                {filteredApiKeys.map((apiKey) => {
                   const isRevoking =
                     revokeApiKeyMutation.isPending &&
                     revokeApiKeyMutation.variables === apiKey.id;

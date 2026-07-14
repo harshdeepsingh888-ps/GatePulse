@@ -9,47 +9,68 @@ import { ChartCard } from "@/components/dashboard/chart-card";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { TrafficChart } from "@/components/dashboard/traffic-chart";
-
-const metrics = [
-  {
-    label: "Total Requests",
-    value: "1,248,593",
-    change: "18.6%",
-    trend: "up",
-    description: "vs yesterday",
-    icon: Activity,
-    tone: "neutral",
-  },
-  {
-    label: "Avg. Latency",
-    value: "142 ms",
-    change: "6.3%",
-    trend: "down",
-    description: "vs yesterday",
-    icon: Clock3,
-    tone: "warning",
-  },
-  {
-    label: "Error Rate",
-    value: "0.42%",
-    change: "12.1%",
-    trend: "down",
-    description: "vs yesterday",
-    icon: ShieldAlert,
-    tone: "danger",
-  },
-  {
-    label: "Active API Keys",
-    value: "128",
-    change: "8.7%",
-    trend: "up",
-    description: "vs yesterday",
-    icon: KeyRound,
-    tone: "success",
-  },
-] as const;
+import { useDashboardAnalytics } from "@/features/analytics/hooks/use-dashboard-analytics";
+import { RecentRequestsTable } from "@/components/dashboard/recent-requests-table";
 
 export function DashboardPage() {
+  const analytics = useDashboardAnalytics();
+
+  const overview = analytics.overviewQuery.data;
+  const errors = analytics.errorsQuery.data;
+  const latency = analytics.latencyQuery.data;
+
+  const errorRate =
+    overview && overview.totalRequests > 0
+      ? ((errors?.totalErrors ?? 0) / overview.totalRequests) * 100
+      : 0;
+
+  const metrics = [
+    {
+      label: "Total Requests",
+      value: overview
+        ? overview.totalRequests.toLocaleString()
+        : "--",
+      change: "Live",
+      trend: "up",
+      description: "all recorded requests",
+      icon: Activity,
+      tone: "neutral",
+    },
+    {
+      label: "Avg. Latency",
+      value: latency
+        ? `${latency.averageLatencyMs.toLocaleString()} ms`
+        : "--",
+      change: "Live",
+      trend: "down",
+      description: "average response time",
+      icon: Clock3,
+      tone: "warning",
+    },
+    {
+      label: "Error Rate",
+      value: overview
+        ? `${errorRate.toFixed(2)}%`
+        : "--",
+      change: "Live",
+      trend: "down",
+      description: "requests with errors",
+      icon: ShieldAlert,
+      tone: "danger",
+    },
+    {
+      label: "Active API Keys",
+      value: overview
+        ? overview.activeApiKeys.toLocaleString()
+        : "--",
+      change: "Live",
+      trend: "up",
+      description: "currently enabled keys",
+      icon: KeyRound,
+      tone: "success",
+    },
+  ] as const;
+
   return (
     <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">
       <section className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -100,30 +121,97 @@ export function DashboardPage() {
           title="Traffic Trend"
           description="API requests over the last 24 hours"
         >
-          <TrafficChart />
+          <TrafficChart
+  data={analytics.usageTrendQuery.data ?? []}
+/>
         </ChartCard>
 
         <SectionCard
-          title="Top API Keys"
-          description="Highest traffic consumers during the selected period"
-          className="min-h-96"
-        >
-          <div className="flex min-h-72 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
-            API key usage ranking will be implemented next
+  title="Top API Keys"
+  description="Highest traffic consumers during the selected period"
+  className="min-h-96"
+>
+  {analytics.topApiKeysQuery.isPending && (
+    <div className="flex min-h-72 items-center justify-center text-sm text-muted-foreground">
+      Loading API key rankings...
+    </div>
+  )}
+
+  {analytics.topApiKeysQuery.isError && (
+    <div className="flex min-h-72 items-center justify-center text-sm text-destructive">
+      Unable to load API key rankings.
+    </div>
+  )}
+
+  {analytics.topApiKeysQuery.isSuccess &&
+    analytics.topApiKeysQuery.data.length === 0 && (
+      <div className="flex min-h-72 items-center justify-center text-sm text-muted-foreground">
+        No API key usage recorded yet.
+      </div>
+    )}
+
+  {analytics.topApiKeysQuery.isSuccess &&
+    analytics.topApiKeysQuery.data.length > 0 && (
+      <div className="space-y-3">
+        {analytics.topApiKeysQuery.data.slice(0, 5).map((apiKey, index) => (
+          <div
+            key={apiKey.id}
+            className="flex items-center gap-3 rounded-xl border border-border/70 p-3"
+          >
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-semibold">
+              {index + 1}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-3">
+                <p className="truncate text-sm font-medium">
+                  {apiKey.name}
+                </p>
+
+                <p className="shrink-0 text-sm font-semibold">
+                  {apiKey.totalRequests.toLocaleString()}
+                </p>
+              </div>
+
+              <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{apiKey.tier}</span>
+                <span>•</span>
+                <span>
+                  {apiKey.isActive ? "Active" : "Revoked"}
+                </span>
+              </div>
+            </div>
           </div>
-        </SectionCard>
+        ))}
+      </div>
+    )}
+</SectionCard>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
         <SectionCard
-          title="Recent Requests"
-          description="Latest requests processed by the gateway"
-          className="min-h-72"
-        >
-          <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
-            Recent requests table will be implemented next
-          </div>
-        </SectionCard>
+  title="Recent Requests"
+  description="Latest requests processed by the gateway"
+  className="min-h-72 xl:col-span-2"
+>
+  {analytics.recentRequestsQuery.isPending && (
+    <div className="flex min-h-48 items-center justify-center text-sm text-muted-foreground">
+      Loading recent requests...
+    </div>
+  )}
+
+  {analytics.recentRequestsQuery.isError && (
+    <div className="flex min-h-48 items-center justify-center text-sm text-destructive">
+      Unable to load recent requests.
+    </div>
+  )}
+
+  {analytics.recentRequestsQuery.isSuccess && (
+    <RecentRequestsTable
+      requests={analytics.recentRequestsQuery.data.slice(0, 8)}
+    />
+  )}
+</SectionCard>
 
         <SectionCard
           title="Gateway Health"
