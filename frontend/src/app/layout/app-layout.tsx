@@ -5,13 +5,13 @@ import { AppSidebar } from "./app-sidebar";
 
 export function AppLayout() {
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <AppSidebar />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="ml-64 flex min-h-screen min-w-0 flex-col">
         <AppHeader />
 
-        <main className="flex-1 overflow-y-auto bg-muted/20 p-6">
+        <main className="flex-1 bg-muted/20 p-6">
           <Outlet />
         </main>
       </div>

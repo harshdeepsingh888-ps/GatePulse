@@ -24,16 +24,32 @@ function getMethodColor(method: string) {
   }
 }
 
-function getStatusColor(status: number) {
+function getStatusStyle(status: number) {
   if (status >= 500) {
-    return "text-red-500";
+    return {
+      label: `${status} Server Error`,
+      className: "border-red-500/20 bg-red-500/10 text-red-600",
+    };
+  }
+
+  if (status === 429) {
+    return {
+      label: `${status} Rate Limited`,
+      className: "border-amber-500/20 bg-amber-500/10 text-amber-600",
+    };
   }
 
   if (status >= 400) {
-    return "text-amber-500";
+    return {
+      label: `${status} Client Error`,
+      className: "border-orange-500/20 bg-orange-500/10 text-orange-600",
+    };
   }
 
-  return "text-emerald-500";
+  return {
+    label: `${status} OK`,
+    className: "border-emerald-500/20 bg-emerald-500/10 text-emerald-600",
+  };
 }
 
 function formatTime(date: string) {
@@ -70,7 +86,10 @@ export function RecentRequestsTable({
         </thead>
 
         <tbody>
-          {requests.map((request) => (
+          {requests.map((request) => {
+            const status = getStatusStyle(request.statusCode);
+
+            return (
             <tr
               key={request.id}
               className="border-b border-border/40"
@@ -89,13 +108,13 @@ export function RecentRequestsTable({
                 {request.endpoint}
               </td>
 
-              <td
-                className={`font-semibold ${getStatusColor(
-                  request.statusCode,
-                )}`}
-              >
-                {request.statusCode}
-              </td>
+              <td className="py-3">
+  <span
+    className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${status.className}`}
+  >
+    {status.label}
+  </span>
+</td>
 
               <td>
                 {request.responseTimeMs} ms
@@ -109,7 +128,8 @@ export function RecentRequestsTable({
                 {formatTime(request.createdAt)}
               </td>
             </tr>
-          ))}
+                    );
+        })}
         </tbody>
       </table>
     </div>

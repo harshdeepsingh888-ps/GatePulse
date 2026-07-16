@@ -13,6 +13,7 @@ import { RecentRequestsTable } from "@/components/dashboard/recent-requests-tabl
 import { SectionCard } from "@/components/dashboard/section-card";
 import { TrafficChart } from "@/components/dashboard/traffic-chart";
 import { useDashboardAnalytics } from "@/features/analytics/hooks/use-dashboard-analytics";
+import { GatewayPulseHero } from "@/components/dashboard/gateway-pulse-hero";
 
 export function DashboardPage() {
   const analytics = useDashboardAnalytics();
@@ -27,83 +28,59 @@ export function DashboardPage() {
       : 0;
 
   const metrics = [
-    {
-      label: "Total Requests",
-      value: overview
-        ? overview.totalRequests.toLocaleString()
-        : "--",
-      change: "Live",
-      trend: "up",
-      description: "all recorded requests",
-      icon: Activity,
-      tone: "neutral",
-    },
-    {
-      label: "Avg. Latency",
-      value: latency
-        ? `${latency.averageLatencyMs.toLocaleString()} ms`
-        : "--",
-      change: "Live",
-      trend: "down",
-      description: "average response time",
-      icon: Clock3,
-      tone: "warning",
-    },
-    {
-      label: "Error Rate",
-      value: overview
-        ? `${errorRate.toFixed(2)}%`
-        : "--",
-      change: "Live",
-      trend: "down",
-      description: "requests with errors",
-      icon: ShieldAlert,
-      tone: "danger",
-    },
-    {
-      label: "Active API Keys",
-      value: overview
-        ? overview.activeApiKeys.toLocaleString()
-        : "--",
-      change: "Live",
-      trend: "up",
-      description: "currently enabled keys",
-      icon: KeyRound,
-      tone: "success",
-    },
-  ] as const;
+  {
+    label: "Blocked Requests",
+    value: overview
+      ? overview.blockedRequests.toLocaleString()
+      : "--",
+    change: "Security",
+    trend: "up",
+    description: "requests blocked by gateway",
+    icon: ShieldAlert,
+    tone: "danger",
+  },
+  {
+    label: "Success Rate",
+    value: overview
+      ? `${(100 - errorRate).toFixed(2)}%`
+      : "--",
+    change: "Healthy",
+    trend: "up",
+    description: "successful gateway responses",
+    icon: Activity,
+    tone: "success",
+  },
+  {
+    label: "Peak Latency",
+    value: latency
+      ? `${latency.maximumLatencyMs.toLocaleString()} ms`
+      : "--",
+    change: "Today",
+    trend: "down",
+    description: "highest response time",
+    icon: Clock3,
+    tone: "warning",
+  },
+  {
+    label: "Fastest Response",
+    value: latency
+      ? `${latency.minimumLatencyMs.toLocaleString()} ms`
+      : "--",
+    change: "Today",
+    trend: "up",
+    description: "lowest response time",
+    icon: KeyRound,
+    tone: "neutral",
+  },
+] as const;
 
   return (
     <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Good evening, Harshdeep
-          </h1>
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            Your API Gateway is{" "}
-            <span className="font-medium text-emerald-500">
-              healthy
-            </span>{" "}
-            and running smoothly.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent"
-          >
-            Last 24 hours
-          </button>
-
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium">
-            <span className="size-2 rounded-full bg-emerald-500" />
-            Live
-          </div>
-        </div>
-      </section>
+      <GatewayPulseHero
+  overview={overview}
+  latency={latency}
+  errorRate={errorRate}
+/>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
@@ -122,13 +99,54 @@ export function DashboardPage() {
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <ChartCard
-          title="Traffic Trend"
-          description="API requests over the last 24 hours"
-        >
-          <TrafficChart
-            data={analytics.usageTrendQuery.data ?? []}
-          />
-        </ChartCard>
+  title="Traffic Intelligence"
+  description="Live gateway traffic and request protection over the last 24 hours"
+>
+  <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="rounded-xl border border-border/60 bg-muted/25 p-4">
+      <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        Requests
+      </p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight">
+        {overview?.totalRequests.toLocaleString() ?? "--"}
+      </p>
+    </div>
+
+    <div className="rounded-xl border border-border/60 bg-muted/25 p-4">
+      <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        Blocked
+      </p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-rose-500">
+        {overview?.blockedRequests.toLocaleString() ?? "--"}
+      </p>
+    </div>
+
+    <div className="rounded-xl border border-border/60 bg-muted/25 p-4">
+      <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        Success Rate
+      </p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-emerald-500">
+        {overview ? `${(100 - errorRate).toFixed(2)}%` : "--"}
+      </p>
+    </div>
+
+    <div className="rounded-xl border border-border/60 bg-muted/25 p-4">
+      <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        Avg. Latency
+      </p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-cyan-500">
+        {latency
+          ? `${latency.averageLatencyMs.toLocaleString()} ms`
+          : "--"}
+      </p>
+    </div>
+  </div>
+
+  <TrafficChart
+  data={analytics.usageTrendQuery.data ?? []}
+  totalRequests={overview?.totalRequests}
+/>
+</ChartCard>
 
         <SectionCard
           title="Top API Keys"
