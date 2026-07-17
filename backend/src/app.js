@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.routes.js";
 import apiKeyRoutes from "./routes/apiKey.routes.js";
 import gatewayRoutes from "./routes/gateway.routes.js";
 import analyticsRoutes from "./routes/analytics.routes.js";
+import settingsRoutes from "./routes/settings.routes.js";
 
 import { logger } from "./shared/logger/logger.js";
 
@@ -46,6 +47,7 @@ app.use("/api/api-keys", apiKeyRoutes);
 app.use("/gateway", gatewayRoutes);
 
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.use(notFoundHandler);
 app.use(globalErrorHandler);

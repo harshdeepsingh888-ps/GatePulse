@@ -2,8 +2,31 @@ import { Save } from "lucide-react";
 
 import { SectionCard } from "@/components/dashboard/section-card";
 import { Button } from "@/components/ui/button";
+import { useSettings } from "@/features/settings/hooks/use-settings";
 
 export function SettingsPage() {
+  const settingsQuery = useSettings();
+
+const settings = settingsQuery.data;
+if (settingsQuery.isPending) {
+  return (
+    <main className="flex min-h-screen items-center justify-center">
+      <p className="text-muted-foreground">
+        Loading gateway settings...
+      </p>
+    </main>
+  );
+}
+
+if (settingsQuery.isError || !settings) {
+  return (
+    <main className="flex min-h-screen items-center justify-center">
+      <p className="text-destructive">
+        Failed to load gateway settings.
+      </p>
+    </main>
+  );
+}
   return (
     <main className="space-y-8 p-6 lg:p-8">
       <section className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -147,18 +170,101 @@ export function SettingsPage() {
 </SectionCard>
 
         <SectionCard
-          title="Security"
-          description="Session, authentication, and API key security controls."
-        >
-          <div className="min-h-48" />
-        </SectionCard>
+  title="Security"
+  description="Session, authentication, and API key security controls."
+>
+  <div className="space-y-4">
+    <div className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3">
+      <div>
+        <p className="text-sm font-medium">Authentication</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Authentication mechanism used for administrator access
+        </p>
+      </div>
+
+      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+        {settings.authentication.type}
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3">
+      <div>
+        <p className="text-sm font-medium">Session Status</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Current administrator authentication session
+        </p>
+      </div>
+
+      <span className="flex items-center gap-2 text-sm font-medium text-emerald-600">
+        <span className="size-2 rounded-full bg-emerald-500" />
+        {settings.authentication.sessionStatus === "active"
+          ? "Active"
+          : "Inactive"}
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3">
+      <div>
+        <p className="text-sm font-medium">API Key Protection</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Gateway requests require a valid GatePulse API key
+        </p>
+      </div>
+
+      <span className="flex items-center gap-2 text-sm font-medium text-emerald-600">
+        <span className="size-2 rounded-full bg-emerald-500" />
+        Enabled
+      </span>
+    </div>
+  </div>
+</SectionCard>
 
         <SectionCard
-          title="System Information"
-          description="Current version, environment, and service status."
-        >
-          <div className="min-h-48" />
-        </SectionCard>
+  title="System Information"
+  description="Current version, environment, and service status."
+>
+  <div className="space-y-4">
+    <div className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3">
+      <div>
+        <p className="text-sm font-medium">Application Version</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Current GatePulse backend release
+        </p>
+      </div>
+
+      <span className="rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+        v{settings.version}
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3">
+      <div>
+        <p className="text-sm font-medium">Runtime Environment</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Environment reported by the backend
+        </p>
+      </div>
+
+      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+        {settings.environment.toUpperCase()}
+      </span>
+    </div>
+
+    <div className="flex items-center justify-between rounded-xl border border-border/60 px-4 py-3">
+      <div>
+        <p className="text-sm font-medium">Gateway Service</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Backend configuration service availability
+        </p>
+      </div>
+
+      <span className="flex items-center gap-2 text-sm font-medium text-emerald-600">
+        <span className="size-2 rounded-full bg-emerald-500" />
+        Operational
+      </span>
+    </div>
+  </div>
+</SectionCard>
       </section>
     </main>
   );
