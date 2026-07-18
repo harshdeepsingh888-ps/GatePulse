@@ -3,18 +3,25 @@ import { Save } from "lucide-react";
 import { SectionCard } from "@/components/dashboard/section-card";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/features/settings/hooks/use-settings";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function SettingsPage() {
   const settingsQuery = useSettings();
 
 const settings = settingsQuery.data;
+
 if (settingsQuery.isPending) {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <p className="text-muted-foreground">
-        Loading gateway settings...
-      </p>
-    </main>
+    <div className="space-y-6">
+      <Skeleton className="h-10 w-64" />
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Skeleton className="h-72 rounded-2xl" />
+        <Skeleton className="h-72 rounded-2xl" />
+        <Skeleton className="h-72 rounded-2xl" />
+        <Skeleton className="h-72 rounded-2xl" />
+      </div>
+    </div>
   );
 }
 

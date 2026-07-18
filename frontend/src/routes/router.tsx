@@ -2,6 +2,8 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 
 import { AppLayout } from "@/app/layout/app-layout";
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { PublicRoute } from "@/components/auth/public-route";
 
 const LoginPage = lazy(() =>
   import("@/pages/login-page").then((module) => ({
@@ -46,14 +48,27 @@ export function AppRouter() {
     <BrowserRouter>
       <Suspense fallback={<RouteLoader />}>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
+          <Route
+  path="/login"
+  element={
+    <PublicRoute>
+      <LoginPage />
+    </PublicRoute>
+  }
+/>
 
-          <Route element={<AppLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/api-keys" element={<ApiKeysPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Route>
+          <Route
+  element={
+    <ProtectedRoute>
+      <AppLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route path="/dashboard" element={<DashboardPage />} />
+  <Route path="/api-keys" element={<ApiKeysPage />} />
+  <Route path="/analytics" element={<AnalyticsPage />} />
+  <Route path="/settings" element={<SettingsPage />} />
+</Route>
 
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />

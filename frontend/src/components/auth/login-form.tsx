@@ -1,18 +1,24 @@
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 import { saveAccessToken } from "@/services/auth.service";
 import { useLogin } from "@/features/auth/hooks/use-login";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
   const navigate = useNavigate();
-
   const loginMutation = useLogin();
 
   const [email, setEmail] = useState("");
@@ -32,9 +38,11 @@ export function LoginForm() {
 
       saveAccessToken(response.token);
 
+      toast.success("Welcome back!");
+
       navigate("/dashboard");
     } catch {
-      // handled by UI
+      toast.error("Invalid email or password.");
     }
   }
 
@@ -66,7 +74,7 @@ export function LoginForm() {
               autoComplete="email"
               placeholder="admin@gatepulse.dev"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(event) => setEmail(event.target.value)}
               required
             />
           </div>
@@ -83,16 +91,19 @@ export function LoginForm() {
                 autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 required
               />
 
               <button
                 type="button"
-                onClick={() =>
-                  setShowPassword(!showPassword)
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                aria-label={
+                  showPassword
+                    ? "Hide password"
+                    : "Show password"
                 }
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="size-4" />
@@ -102,12 +113,6 @@ export function LoginForm() {
               </button>
             </div>
           </div>
-
-          {loginMutation.isError && (
-            <p className="text-sm text-red-500">
-              Invalid email or password.
-            </p>
-          )}
 
           <Button
             type="submit"

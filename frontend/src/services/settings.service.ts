@@ -13,7 +13,8 @@ export interface SettingsOverview {
 }
 
 export async function getSettings() {
-  const response = await apiClient.get("/settings");
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  return response.data.data as SettingsOverview;
+  const response = await apiClient.get("/settings");
+  return response.data.data;
 }
